@@ -3,14 +3,20 @@ import re
 
 import allure
 
-from pages.base_page import BasePage, is_captcha_url
+from pages.base_page import BasePage
+from utils.url import extract_item_id, is_captcha_url
+
+_VARIANT_LABEL_RE = re.compile(
+    r"^\s*(Colour|Color|Size|Style|Material|Pack|Capacity|Pattern|Shape|Configuration|Type|Model|Edition|Set|Bundle)\s*:",
+    re.I,
+)
+_PLACEHOLDER_RE = re.compile(r"^\s*-?\s*Select\s*-?\s*$", re.I)
 
 
 class ItemPage(BasePage):
     @allure.step("Open item page: {url}")
     def goto(self, url: str) -> "ItemPage":
-        m = re.search(r"/itm/(?:[^/]+/)?(\d+)", url)
-        self._source_iid = m.group(1) if m else None
+        self._source_iid = extract_item_id(url)
         if self.validator:
             with self.validator.expect_ok(r"/itm/", method="GET"):
                 try:
@@ -36,28 +42,34 @@ class ItemPage(BasePage):
     @allure.step("Pick random variants")
     def pick_random_variants(self) -> "ItemPage":
         picks: list[str] = []
+        self._pick_listbox_variants(picks)
+        self._pick_native_select_variants(picks)
+        self._pick_radio_variants(picks)
+        if picks:
+            allure.attach(
+                "\n".join(picks),
+                name="picked-variants",
+                attachment_type=allure.attachment_type.TEXT,
+            )
+        return self
 
+    def _pick_listbox_variants(self, picks: list[str]) -> None:
         # Strategy A: eBay's listbox-button variant widget (e.g. "Colour: Select" + chevron).
         # Filter to buttons whose label starts with a known variant key — other buttons on
         # the page also use aria-haspopup="listbox" (seller feedback dropdown navigates away).
         # Re-iterate so dependent variants (Pack often renders after Colour) get picked too.
-        variant_label_re = re.compile(
-            r"^\s*(Colour|Color|Size|Style|Material|Pack|Capacity|Pattern|Shape|Configuration|Type|Model|Edition|Set|Bundle)\s*:",
-            re.I,
-        )
-        placeholder_re = re.compile(r"^\s*-?\s*Select\s*-?\s*$", re.I)
         for _round in range(6):
             progress = False
             for btn in self.page.locator('button[aria-haspopup="listbox"]').all():
                 if not btn.is_visible():
                     continue
                 label_full = (btn.get_attribute("aria-label") or btn.text_content() or "").strip()
-                m = variant_label_re.match(label_full)
+                m = _VARIANT_LABEL_RE.match(label_full)
                 if not m:
                     continue
                 # Skip if the picker already has a real value (text after "Label:" isn't placeholder).
                 value_part = label_full[m.end():].strip()
-                if value_part and not placeholder_re.match(value_part):
+                if value_part and not _PLACEHOLDER_RE.match(value_part):
                     continue
                 label = m.group(0).rstrip(":").strip()
                 try:
@@ -91,7 +103,7 @@ class ItemPage(BasePage):
                     if (o.get_attribute("data-disabled") or "false").lower() == "true":
                         continue
                     txt = (o.text_content() or "").strip()
-                    if not txt or placeholder_re.match(txt):
+                    if not txt or _PLACEHOLDER_RE.match(txt):
                         continue
                     enabled.append((o, txt))
                 if not enabled:
@@ -109,6 +121,7 @@ class ItemPage(BasePage):
             if not progress:
                 break
 
+    def _pick_native_select_variants(self, picks: list[str]) -> None:
         # Strategy B: legacy / non-skinned native <select>.
         # Skip <select> hidden behind a Strategy-A skin (display:none → not visible).
         panel = self.page.locator(
@@ -154,6 +167,8 @@ class ItemPage(BasePage):
                 self._select_value(select, value)
             picks.append(f"{label} = {text}")
 
+    def _pick_radio_variants(self, picks: list[str]) -> None:
+        # Strategy C: radiogroup variants.
         for group in self.page.get_by_role("radiogroup").all():
             label = group.get_attribute("aria-label") or "variant"
             radios = group.get_by_role("radio").all()
@@ -174,14 +189,6 @@ class ItemPage(BasePage):
             with allure.step(f"Pick {label}: {text}"):
                 chosen.click()
             picks.append(f"{label} = {text}")
-
-        if picks:
-            allure.attach(
-                "\n".join(picks),
-                name="picked-variants",
-                attachment_type=allure.attachment_type.TEXT,
-            )
-        return self
 
     @allure.step("Add to cart")
     def add_to_cart(self) -> "ItemPage":

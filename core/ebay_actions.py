@@ -6,13 +6,13 @@ from core.network_validator import NetworkValidator
 from pages.cart_page import CartPage
 from pages.item_page import ItemPage
 from pages.search_page import SearchPage
+from utils.money import parse_total
 
 
 class EbayActions:
     def __init__(self, page: Page, validator: NetworkValidator | None = None):
         self.page = page
         self.validator = validator or NetworkValidator(page)
-        page._validator = self.validator
 
     @allure.step("Verify eBay session")
     def login(self) -> None:
@@ -75,7 +75,7 @@ class EbayActions:
         cart = CartPage(self.page, self.validator).goto()
         threshold = budget_per_item * items_count
         raw = cart.get_total_text()
-        actual = CartPage.parse_total(raw)
+        actual = parse_total(raw)
         allure.attach(
             f"raw={raw!r} parsed={actual} threshold={threshold}",
             name="cart-total-check",

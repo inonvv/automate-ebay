@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from playwright.sync_api import Playwright
 
 from core.ebay_actions import EbayActions
+from core.network_validator import NetworkValidator
 
 load_dotenv()
 
@@ -68,6 +69,11 @@ def page(context):
     return context.pages[0] if context.pages else context.new_page()
 
 
+@pytest.fixture
+def validator(page) -> NetworkValidator:
+    return NetworkValidator(page)
+
+
 @pytest.fixture(autouse=True)
 def _clear_cart_before(page):
     from pages.cart_page import CartPage
@@ -85,7 +91,7 @@ def pytest_runtest_makereport(item, call):
     if rep.when == "call":
         page = item.funcargs.get("page")
         if page is not None:
-            validator = getattr(page, "_validator", None)
+            validator = item.funcargs.get("validator")
             if validator is not None:
                 try:
                     validator.attach_traffic_log()

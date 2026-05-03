@@ -1,4 +1,3 @@
-import re
 from urllib.parse import urljoin
 
 import allure
@@ -6,8 +5,7 @@ from playwright.sync_api import Page
 
 from core.network_validator import NetworkValidator
 from pages.base_page import BasePage
-
-_ITEM_URL_RE = re.compile(r"^https?://(?:www\.)?ebay\.com/itm/(\d{11,13})(?:[/?]|$)")
+from utils.url import canonical_item_url
 
 
 class ResultsPage(BasePage):
@@ -46,10 +44,9 @@ class ResultsPage(BasePage):
             if not href:
                 continue
             absolute = urljoin(self.page.url, href).split("?")[0].split("#")[0]
-            m = _ITEM_URL_RE.match(absolute)
-            if not m:
+            canonical = canonical_item_url(absolute)
+            if not canonical:
                 continue
-            canonical = f"https://www.ebay.com/itm/{m.group(1)}"
             if canonical in self._seen:
                 continue
             self._seen.add(canonical)

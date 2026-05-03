@@ -1,8 +1,8 @@
 from core.ebay_actions import EbayActions
 
 
-def test_search_add_assert(page, scenario):
-    actions = EbayActions(page)
+def test_search_add_assert(page, scenario, validator):
+    actions = EbayActions(page, validator)
     actions.login()
     urls = actions.search_items_by_name_under_price(
         scenario["query"], scenario["maxPrice"], scenario["limit"]
