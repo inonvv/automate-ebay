@@ -1,0 +1,26 @@
+[
+  {
+    "query": "wireless mouse",
+    "maxPrice": 25,
+    "limit": 5,
+    "budgetPerItem": 250
+  },
+  {
+    "query": "usb cable",
+    "maxPrice": 10,
+    "limit": 3,
+    "budgetPerItem": 50
+  },
+  {
+    "query": "phone case",
+    "maxPrice": 15,
+    "limit": 4,
+    "budgetPerItem": 2
+  },
+  {
+    "query": "notebook",
+    "maxPrice": 30,
+    "limit": 3,
+    "budgetPerItem": 5
+  }
+]

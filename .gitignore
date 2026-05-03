@@ -1,0 +1,51 @@
+# --- SECRETS — DO NOT COMMIT ---
+.env
+.env.local
+*.env
+.user-data/
+.user-data-*/
+auth.json
+auth.json.bak
+
+# --- PYTHON ---
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+
+# --- TEST ARTIFACTS ---
+allure-results/
+allure-report/
+traces/
+test-results/
+*.trace
+*.zip
+
+# --- IDE / EDITOR ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- CLAUDE CODE LOCAL STATE ---
+.claude/
+
+# --- LOGS ---
+*.log
+logs/
+
+# --- COVERAGE ---
+.coverage
+htmlcov/
+
+*.stackdump

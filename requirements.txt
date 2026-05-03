@@ -1,0 +1,7 @@
+playwright
+pytest
+pytest-asyncio
+pytest-playwright
+allure-pytest
+pydantic>=2
+python-dotenv
