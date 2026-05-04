@@ -1,6 +1,15 @@
 import os
+from typing import Literal
 
 from pydantic import BaseModel, Field, SecretStr, field_validator
+
+Currency = Literal["USD", "ILS", "EUR", "GBP"]
+
+
+class Money(BaseModel):
+    """Cart-side amount + observed currency. No FX conversion is performed."""
+    amount: float = Field(ge=0)
+    currency: Currency
 
 
 class SearchInput(BaseModel):

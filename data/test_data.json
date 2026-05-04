@@ -3,24 +3,28 @@
     "query": "wireless mouse",
     "maxPrice": 25,
     "limit": 5,
-    "budgetPerItem": 250
+    "budgetPerItem": 250,
+    "currency": "USD"
   },
   {
     "query": "usb cable",
     "maxPrice": 10,
     "limit": 3,
-    "budgetPerItem": 50
+    "budgetPerItem": 50,
+    "currency": "USD"
   },
   {
     "query": "phone case",
     "maxPrice": 15,
     "limit": 4,
-    "budgetPerItem": 2
+    "budgetPerItem": 2,
+    "currency": "USD"
   },
   {
     "query": "notebook",
     "maxPrice": 30,
     "limit": 3,
-    "budgetPerItem": 5
+    "budgetPerItem": 5,
+    "currency": "USD"
   }
 ]

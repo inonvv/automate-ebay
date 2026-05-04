@@ -8,6 +8,8 @@ def test_search_add_assert(page, scenario, validator):
         scenario["query"], scenario["maxPrice"], scenario["limit"]
     )
     actions.add_items_to_cart(urls)
-    actions.assert_cart_total_not_exceeds(scenario["budgetPerItem"], len(urls))
+    actions.assert_cart_total_not_exceeds(
+        scenario["budgetPerItem"], len(urls), scenario["currency"]
+    )
     assert isinstance(urls, list)
     assert len(urls) <= scenario["limit"]
