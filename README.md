@@ -4,38 +4,47 @@ Playwright (Python) + pytest E2E suite against eBay. Page Object Model, data-dri
 
 ## Prerequisites
 
-- Python 3.10+
-- Google Chrome installed natively
-- Allure CLI (`scoop install allure` / `brew install allure`)
+Python 3.10+ · Chrome · Git · Allure CLI (`scoop install allure` / `brew install allure`)
 
-## Setup
+## Steps
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-playwright install chromium
-copy .env.example .env        # then paste credentials into .env
-```
+1. Get creds from instructor (`EBAY_USER`, `EBAY_PASS`).
+2. Clone
+   ```bash
+   git clone <repo-url>
+   cd Automate-Ebay
+   ```
+3. Venv + install
+   ```bash
+   python -m venv .venv
+   .venv\Scripts\activate
+   pip install -r requirements.txt
+   playwright install chromium
+   ```
+4. Configure
+   ```bash
+   copy .env.example .env
+   ```
+   Paste `EBAY_USER` / `EBAY_PASS` into `.env`.
+5. First-run login (one time)
+   ```bash
+   python save_auth.py
+   ```
+   Browse 20–30s → Sign In → tick "Keep me signed in" → press Enter in terminal.
+6. Run tests
+   ```bash
+   pytest -q
+   ```
+7. Allure report
+   ```bash
+   allure serve allure-results
+   ```
 
-## First Run — Login
+## Common issues
 
-Auto-login boots from `.env` on the first test run; session is then reused from `.user-data/` (gitignored). If 2FA or CAPTCHA blocks the auto path, fall back to:
-
-```bash
-python save_auth.py
-```
-
-Browse for 20-30s, sign in, solve CAPTCHA, press Enter.
-
-## Run Tests
-
-```bash
-pytest -q
-allure serve allure-results
-```
-
-Each scenario in `data/test_data.json` runs as a parametrized test.
+- **No saved session** → redo step 5.
+- **Currency mismatch** → set eBay account country to US, or edit `currency` in `data/test_data.json`.
+- **Captcha during tests** → wait a few minutes, retry.
 
 ---
 
