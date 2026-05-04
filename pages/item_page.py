@@ -159,9 +159,10 @@ class ItemPage(BasePage):
                     text = (opt.text_content() or "").strip()
                     valid.append((value, text))
             if not valid:
-                raise RuntimeError(
-                    f"Variant {label} has zero valid options after filtering — likely all out of stock"
-                )
+                with allure.step(f"Skip {label}: out of stock"):
+                    pass
+                picks.append(f"{label} = (skipped — out of stock)")
+                continue
             value, text = random.choice(valid)
             with allure.step(f"Pick {label}: {text}"):
                 self._select_value(select, value)
@@ -182,9 +183,10 @@ class ItemPage(BasePage):
                 text = (r.get_attribute("aria-label") or r.text_content() or "").strip()
                 valid_radios.append((r, text))
             if not valid_radios:
-                raise RuntimeError(
-                    f"Variant {label} has zero enabled radio options — likely all out of stock"
-                )
+                with allure.step(f"Skip {label}: out of stock"):
+                    pass
+                picks.append(f"{label} = (skipped — out of stock)")
+                continue
             chosen, text = random.choice(valid_radios)
             with allure.step(f"Pick {label}: {text}"):
                 chosen.click()

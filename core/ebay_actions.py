@@ -3,6 +3,7 @@ import allure
 from playwright.sync_api import Page
 
 from core.network_validator import NetworkValidator
+from core.schemas import SearchInput
 from pages.cart_page import CartPage
 from pages.item_page import ItemPage
 from pages.search_page import SearchPage
@@ -32,16 +33,22 @@ class EbayActions:
     def search_items_by_name_under_price(
         self, query: str, max_price: float, limit: int = 5
     ) -> list[str]:
-        results = SearchPage(self.page, self.validator).goto().search(query).apply_price_filter(max_price)
+        params = SearchInput(query=query, max_price=max_price, limit=limit)
+        results = (
+            SearchPage(self.page, self.validator)
+            .goto()
+            .search(params.query)
+            .apply_price_filter(params.max_price)
+        )
         urls: list[str] = []
-        while len(urls) < limit:
-            urls.extend(results.collect_item_urls(limit - len(urls)))
-            if len(urls) >= limit or not results.next_page():
+        while len(urls) < params.limit:
+            urls.extend(results.collect_item_urls(params.limit - len(urls)))
+            if len(urls) >= params.limit or not results.next_page():
                 break
-        return urls[:limit]
+        return urls[: params.limit]
 
     @allure.step("Add items to cart")
-    def add_items_to_cart(self, urls: list[str]) -> int:
+    def add_items_to_cart(self, urls: list[str]) -> None:
         added = 0
         error_types: list[str] = []
         for idx, url in enumerate(urls):
@@ -68,7 +75,6 @@ class EbayActions:
             raise RuntimeError(
                 f"Systemic add-to-cart failure: 0/{len(urls)} added; error types={set(error_types)}"
             )
-        return added
 
     @allure.step("Assert cart total <= {budget_per_item} x {items_count}")
     def assert_cart_total_not_exceeds(self, budget_per_item: float, items_count: int) -> None:

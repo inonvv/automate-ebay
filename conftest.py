@@ -7,7 +7,7 @@ import pytest
 from dotenv import load_dotenv
 from playwright.sync_api import Playwright
 
-from core.ebay_actions import EbayActions
+from core.auth import ensure_session
 from core.network_validator import NetworkValidator
 
 load_dotenv()
@@ -37,22 +37,10 @@ def test_data():
 @pytest.fixture(scope="session", autouse=True)
 def _verify_session(playwright: Playwright):
     print("\n[verify_session] fixture entered", flush=True)
-    if not USER_DATA_DIR.exists():
-        pytest.exit(
-            f"No saved session at {USER_DATA_DIR}/ — run: python save_auth.py",
-            returncode=2,
-        )
-    ctx = playwright.chromium.launch_persistent_context(
-        str(USER_DATA_DIR), **LAUNCH_KWARGS
-    )
     try:
-        p = ctx.new_page()
-        try:
-            EbayActions(p).login()
-        except RuntimeError as e:
-            pytest.exit(str(e), returncode=2)
-    finally:
-        ctx.close()
+        ensure_session(playwright, USER_DATA_DIR, LAUNCH_KWARGS)
+    except Exception as e:
+        pytest.exit(f"Session bootstrap failed: {type(e).__name__}: {e}", returncode=2)
 
 
 @pytest.fixture

@@ -15,14 +15,15 @@ class ResultsPage(BasePage):
 
     @allure.step("Apply max price filter: {max_price}")
     def apply_price_filter(self, max_price: float) -> "ResultsPage":
+        price_str = str(int(max_price)) if max_price == int(max_price) else str(max_price)
         max_input = self.page.locator('input[aria-label^="Maximum Value"]').first
         max_input.scroll_into_view_if_needed()
-        max_input.fill(str(max_price))
+        max_input.fill(price_str)
         if self.validator:
             with self.validator.expect_ok(
                 r"/sch/i\.html.*_udhi=",
                 method="GET",
-                query_params={"_udhi": str(int(max_price)) if max_price == int(max_price) else str(max_price)},
+                query_params={"_udhi": price_str},
             ):
                 max_input.press("Enter")
         else:
