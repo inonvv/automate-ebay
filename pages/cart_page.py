@@ -1,6 +1,7 @@
 import re
 
 import allure
+from playwright.sync_api import expect
 
 from pages.base_page import BasePage
 from utils.url import is_captcha_url, is_live_cart_url
@@ -36,22 +37,27 @@ class CartPage(BasePage):
     @allure.step("Clear cart")
     def clear(self) -> "CartPage":
         self.goto()
-        for _ in range(20):
-            btn = self.page.locator(
-                'button[aria-label*="Remove"], button:has-text("Remove")'
-            ).first
-            if not btn.count() or not btn.is_visible():
-                break
-            btn.click()
-            self.page.wait_for_load_state("domcontentloaded")
-        remaining = self.page.locator(
+        remove = self.page.locator(
             'button[aria-label*="Remove"], button:has-text("Remove")'
-        ).count()
-        if remaining:
-            raise AssertionError(
-                f"Cart not fully cleared after 20 attempts; {remaining} Remove buttons still visible"
-            )
-        return self
+        )
+        for _ in range(20):
+            prev = remove.count()
+            if prev == 0:
+                return self
+            # force=True bypasses Playwright's pointer-event-interception check.
+            # eBay's cart wrappers (left-column, app-cart, cart-bucket-head)
+            # routinely register as intercepting the click path even though the
+            # Remove button is the actual target — a regular click hangs in
+            # actionability retries until the 30s timeout. The click itself is
+            # always against the right element; force just skips the precheck.
+            remove.first.click(force=True)
+            try:
+                expect(remove).not_to_have_count(prev, timeout=10000)
+            except AssertionError:
+                continue
+        raise AssertionError(
+            f"Cart not fully cleared after 20 attempts; {remove.count()} Remove buttons still visible"
+        )
 
     @allure.step("Read cart subtotal text")
     def get_total_text(self) -> str:
