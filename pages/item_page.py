@@ -201,8 +201,13 @@ class ItemPage(BasePage):
             self.page.locator('a[data-testid="ux-call-to-action"]:has-text("Add to cart")').first,
             self.page.locator('button[id^="atcBtn_btn"]').first,
         ]
+        last_error: Exception | None = None
+        tried = 0
         for btn in candidates:
-            if btn.count() and btn.is_visible():
+            if not (btn.count() and btn.is_visible()):
+                continue
+            tried += 1
+            try:
                 btn.click()
                 self._wait_for_atc_signal()
                 self._dismiss_post_add_modals()
@@ -212,11 +217,24 @@ class ItemPage(BasePage):
                     attachment_type=allure.attachment_type.PNG,
                 )
                 return self
+            except Exception as e:
+                last_error = e
+                allure.attach(
+                    f"candidate {tried} failed: {type(e).__name__}: {e}",
+                    name="atc-candidate-failed",
+                    attachment_type=allure.attachment_type.TEXT,
+                )
+                continue
         allure.attach(
             self.screenshot(),
             name="no-add-to-cart",
             attachment_type=allure.attachment_type.PNG,
         )
+        if last_error is not None:
+            raise RuntimeError(
+                f"All {tried} Add-to-cart candidates failed at {self.page.url}; last: "
+                f"{type(last_error).__name__}: {last_error}"
+            ) from last_error
         raise RuntimeError(f"No 'Add to cart' button found at {self.page.url}")
 
     def _select_value(self, select, value: str) -> None:
