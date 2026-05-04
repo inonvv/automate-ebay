@@ -76,14 +76,16 @@ class EbayActions:
                 f"Systemic add-to-cart failure: 0/{len(urls)} added; error types={set(error_types)}"
             )
 
-    @allure.step("Assert cart total <= {budget_per_item} x {items_count}")
-    def assert_cart_total_not_exceeds(self, budget_per_item: float, items_count: int) -> None:
+    @allure.step("Assert cart total <= {budget_per_item} {currency} x {items_count}")
+    def assert_cart_total_not_exceeds(
+        self, budget_per_item: float, items_count: int, currency: str
+    ) -> None:
         cart = CartPage(self.page, self.validator).goto()
         threshold = budget_per_item * items_count
         raw = cart.get_total_text()
-        actual = parse_total(raw)
+        money = parse_total(raw)
         allure.attach(
-            f"raw={raw!r} parsed={actual} threshold={threshold}",
+            f"raw={raw!r} parsed={money} threshold={threshold} {currency}",
             name="cart-total-check",
             attachment_type=allure.attachment_type.TEXT,
         )
@@ -92,6 +94,10 @@ class EbayActions:
             name="cart-page",
             attachment_type=allure.attachment_type.PNG,
         )
-        assert actual <= threshold, (
-            f"Cart total {actual} exceeds threshold {threshold} (raw: {raw!r})"
+        assert money.currency == currency, (
+            f"Currency mismatch: cart={money.currency!r}, scenario expects {currency!r} — "
+            f"set eBay locale to match scenario or update test_data currency (raw: {raw!r})"
+        )
+        assert money.amount <= threshold, (
+            f"Cart total {money.amount} {money.currency} exceeds threshold {threshold} {currency} (raw: {raw!r})"
         )
