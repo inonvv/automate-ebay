@@ -17,6 +17,7 @@ class SearchInput(BaseModel):
     query: str = Field(min_length=1)
     max_price: float = Field(gt=0)
     limit: int = Field(gt=0)
+    currency: "Currency" = "USD"
 
     @field_validator("query")
     @classmethod

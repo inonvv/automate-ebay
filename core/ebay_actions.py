@@ -29,16 +29,16 @@ class EbayActions:
                 "eBay session expired or missing. Re-run: python save_auth.py"
             )
 
-    @allure.step("Search '{query}' under {max_price} (limit {limit})")
+    @allure.step("Search '{query}' under {max_price} {currency} (limit {limit})")
     def search_items_by_name_under_price(
-        self, query: str, max_price: float, limit: int = 5
+        self, query: str, max_price: float, limit: int = 5, currency: str = "USD"
     ) -> list[str]:
-        params = SearchInput(query=query, max_price=max_price, limit=limit)
+        params = SearchInput(query=query, max_price=max_price, limit=limit, currency=currency)
         results = (
             SearchPage(self.page, self.validator)
             .goto()
             .search(params.query)
-            .apply_price_filter(params.max_price)
+            .apply_price_filter(params.max_price, params.currency)
         )
         urls: list[str] = []
         while len(urls) < params.limit:

@@ -17,32 +17,32 @@ def _detect_currency(text: str) -> Currency:
     raise ValueError(f"No currency token in cart total text: {text!r}")
 
 
-def parse_total(text: str) -> Money:
-    """Parse a cart-total string into a `Money(amount, currency)`.
+_USD_LIKE: frozenset[Currency] = frozenset({"USD", "GBP", "ILS"})
 
-    Locale heuristic — assumes one of:
-      - US/UK: ``$220.00`` or ``£220.00`` — comma is thousands, dot is decimal.
-      - EU: ``€220,00`` — comma is decimal when followed by exactly 2 digits.
-      - Mixed: ``1.234,56`` (EU thousands+decimal) — last separator wins.
+
+def parse_total(text: str) -> Money:
+    """Parse a price string into a `Money(amount, currency)`.
+
+    Locale rules are driven by the detected currency, not by counting digits
+    after a comma — the digit-count heuristic misreads EU prices like
+    ``€1,5`` (1.50, not 15) and any other non-2-decimal comma.
+      - USD / GBP / ILS: comma is thousands, dot is decimal.
+      - EUR: dot is thousands, comma is decimal (``1.234,56`` and ``€1,5`` both work).
     Refuses ranges (``$220 to $250``) loudly rather than silently picking the lower bound.
-    Refuses bare numbers with no currency token — silently treating ILS as USD was the bug
-    that motivated this module.
+    Refuses bare numbers with no currency token.
     """
     currency = _detect_currency(text)
     tokens = re.findall(r"\d[\d.,]*", text)
     if len(tokens) > 1 or " to " in text.lower():
-        raise ValueError(f"Cart total looks like a range, refusing to guess: {text!r}")
+        raise ValueError(f"Price looks like a range, refusing to guess: {text!r}")
     if not tokens:
-        raise ValueError(f"No numeric token in cart total text: {text!r}")
+        raise ValueError(f"No numeric token in price text: {text!r}")
     digits = tokens[0]
-    if "." in digits and "," in digits:
-        if digits.rfind(".") > digits.rfind(","):
-            digits = digits.replace(",", "")
-        else:
+    if currency in _USD_LIKE:
+        digits = digits.replace(",", "")
+    else:
+        if "." in digits and "," in digits:
             digits = digits.replace(".", "").replace(",", ".")
-    elif "," in digits:
-        if len(digits.rsplit(",", 1)[-1]) == 2:
+        elif "," in digits:
             digits = digits.replace(",", ".")
-        else:
-            digits = digits.replace(",", "")
     return Money(amount=float(digits), currency=currency)
