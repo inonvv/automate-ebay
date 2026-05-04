@@ -65,10 +65,7 @@ def validator(page) -> NetworkValidator:
 @pytest.fixture(autouse=True)
 def _clear_cart_before(page):
     from pages.cart_page import CartPage
-    try:
-        CartPage(page).clear()
-    except Exception as e:
-        print(f"[clear_cart] skipped: {type(e).__name__}: {e}", flush=True)
+    CartPage(page).clear()
     yield
 
 
