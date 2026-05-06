@@ -48,7 +48,11 @@ class EbayActions:
         return urls[: params.limit]
 
     @allure.step("Add items to cart")
-    def add_items_to_cart(self, urls: list[str]) -> None:
+    def add_items_to_cart(self, urls: list[str]) -> int:
+        # Strict: any per-item failure aborts. Returning a smaller count would shrink
+        # the downstream threshold along with the cart, so an over-budget item that
+        # *did* land could still rubber-stamp green. Easier to reason about, and
+        # matches the spec's "buy N items" literal.
         added = 0
         error_types: list[str] = []
         for idx, url in enumerate(urls):
@@ -71,10 +75,11 @@ class EbayActions:
                     name="skip-item",
                     attachment_type=allure.attachment_type.TEXT,
                 )
-        if urls and added == 0:
+        if added < len(urls):
             raise RuntimeError(
-                f"Systemic add-to-cart failure: 0/{len(urls)} added; error types={set(error_types)}"
+                f"Add-to-cart partial: {added}/{len(urls)} added; error types={set(error_types)}"
             )
+        return added
 
     @allure.step("Assert cart total <= {budget_per_item} {currency} x {items_count}")
     def assert_cart_total_not_exceeds(
