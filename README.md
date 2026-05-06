@@ -76,7 +76,7 @@ Python 3.10+ · Chrome · Git · Allure CLI (`scoop install allure` / `brew inst
 - **Headless off** for lower anti-bot score.
 - **Cart-clear best-effort** — autouse fixture catches and logs, doesn't raise.
 - **Variant pick excludes quantity** (intentional).
-- **Partial fills allowed** — per-URL failures skip; only 0/N raises. Threshold uses intended `len(urls)`, so partial fills only loosen the check.
+- **Strict per-item ATC** (`ebay_actions.py:75`) — any single item failure aborts with `Add-to-cart partial: k/N`. Threshold uses the realized count returned from `add_items_to_cart`, so it can't shrink to rubber-stamp an over-budget item.
 - **Profile per xdist worker** (`.user-data-N/`); each needs its own login.
 - **Subtotal, not grand total** (`cart_page.py:84`) — items only; shipping/tax appear at checkout.
 - **Auth fallback:** empty profile → auto-login → on 2FA/captcha → `save_auth.py`.
